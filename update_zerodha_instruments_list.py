@@ -20,17 +20,15 @@ pg_config = {
 # Create a PostgreSQL connection pool
 connection = psycopg2.connect(**pg_config)
 
-def get_instrument_list():
+def update_instrument_list():
     instrument_list = []
-    instrument_and_stocks_list = []
 
     # Fetch data from PostgreSQL
-    select_query = 'SELECT * FROM public."Stocks" ORDER BY id ASC'
+    select_query = 'SELECT * FROM public."Stocks"'
     cursor = connection.cursor()
     cursor.execute(select_query)
     result = cursor.fetchall()
-
-
+    print(result)
 
     # Fetch data from Zerodha API
     headers = {
@@ -47,10 +45,30 @@ def get_instrument_list():
         #below line finds the index where the data array has the stock token value and is the nse exchange
         data_index = next((index for index, item in enumerate(data_array) if item[1] == result[i][2] and item[11] == 'NSE'), -1)
         instrument_list.append(data_array[data_index][0])
+    
+    for i in range(len(result)):
+        update_query = f'UPDATE public."Stocks" SET "zerodhaInstrumentToken" = {instrument_list[i]} WHERE "id" = {result[i][0]}'
+        print(instrument_list[i])
+        print(result[i][0])
+        cursor.execute(update_query)
 
+    connection.commit()
     
 
     return instrument_list
 
+
+def return_instrument_list_from_db():
+    instrument_list = []
+
+    # Fetch data from PostgreSQL
+    select_query = 'SELECT "zerodhaInstrumentToken" FROM public."Stocks"'
+    cursor = connection.cursor()
+    cursor.execute(select_query)
+    result = cursor.fetchall()
+    result_list = [item[0] for item in result]
+    return result_list
+
+
 if __name__ == "__main__":
-    get_instrument_list()
+    update_instrument_list()

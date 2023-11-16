@@ -4,7 +4,7 @@ import pandas as pd
 from dotenv import load_dotenv
 import os
 from datetime import datetime
-from get_token_and_stock_list import get_instrument_list
+from update_zerodha_instruments_list import update_instrument_list, return_instrument_list_from_db
 import redis
 import json
 import time
@@ -12,7 +12,7 @@ import time
 # Get the current timestamp
 
 
-accessToken = "c3pH5AzjIjR8AZFTc97E30Vy4328dWbh"  # to be copied from the other file
+accessToken = os.getenv("ZERODHA_ACCESS_TOKEN") # to be copied from the other file
 redisConnectionString = "redis-15632.c264.ap-south-1-1.ec2.cloud.redislabs.com:15632"
 # r = redis.from_url(redisConnectionString) # global redis connection object
 import redis
@@ -44,10 +44,11 @@ def main():
 
 def on_ticks(ws, ticks):
     # Callback to receive ticks.
-   
+
+    print(len(ticks))
     json_data = json.dumps(ticks)
    
-    print(json_data)
+    print(ticks)
     start_time = r.time()
     r.set('tickData', json_data)
     end_time = r.time()
@@ -60,7 +61,7 @@ def on_ticks(ws, ticks):
 
 
 def on_connect(ws, response):
-    instrumentList = get_instrument_list()
+    instrumentList = return_instrument_list_from_db()
     integerInstrumentList = [int(num) for num in instrumentList]
 
     ws.subscribe(integerInstrumentList)
