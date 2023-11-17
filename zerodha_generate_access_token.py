@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 from kiteconnect import KiteConnect
 
-requestToken = "20CRM6HdPirPHyDPXBuVMhLGCJHfS1Rj" #this is manually generated each time
+requestToken = "e0QSK3cL2nHf1bNVWk8N6kwcKRCvNEqp" #this is manually generated each time
 
 def main():
     load_dotenv(override=True)

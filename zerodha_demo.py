@@ -9,6 +9,9 @@ import redis
 import json
 import time
 
+from celery_app import hello
+
+
 # Get the current timestamp
 
 
@@ -39,24 +42,28 @@ def main():
     kws.on_ticks = on_ticks
     kws.on_connect = on_connect
     kws.on_close = on_close
+
     kws.connect()
 
 
 def on_ticks(ws, ticks):
-    # Callback to receive ticks.
 
     print(len(ticks))
-    json_data = json.dumps(ticks)
-   
+    pipeline = r.pipeline()
+
+    for item in ticks:
+        pipeline.set(str(item["instrument_token"]), item["last_price"])
+
+
+    start_time = time.perf_counter()
+    result = pipeline.execute()
+    end_time = time.perf_counter()
+
+    latency = end_time - start_time
+    print(f"Latency: {latency:.6f} seconds") 
+
     print(ticks)
-    start_time = r.time()
-    r.set('tickData', json_data)
-    end_time = r.time()
 
-    latency_in_microseconds = int(end_time[0]) * 1_000_000 + int(end_time[1]) - (int(start_time[0]) * 1_000_000 + int(start_time[1]))
-
-    print(f"Latency: {latency_in_microseconds} microseconds")
-    # print(json.loads(r.get('tickData')))
 
 
 
@@ -72,6 +79,7 @@ def on_connect(ws, response):
 def on_close(ws, code, reason):
     # On connection close stop the main loop
     # Reconnection will not happen after executing `ws.stop()`
+
     r.close()
     ws.stop()
 
